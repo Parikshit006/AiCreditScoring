@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ArrowRight, Sparkles, TrendingDown } from 'lucide-react';
+import { Sparkles, TrendingDown } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -10,68 +11,70 @@ const CreditCoach = ({ result, formData }) => {
     const [suggestions, setSuggestions] = useState([]);
 
     useEffect(() => {
-        generateSuggestions();
-    }, [result]);
+        const generateSuggestions = () => {
+            // fast heuristic based on high risk factors or just common sense rules
+            // In a real app, this might come from the backend's counterfactual analysis
 
-    const generateSuggestions = () => {
-        // fast heuristic based on high risk factors or just common sense rules
-        // In a real app, this might come from the backend's counterfactual analysis
+            const newSuggestions = [];
+            const modifiedFormData = { ...formData };
 
-        const newSuggestions = [];
-        const modifiedFormData = { ...formData };
+            // Check Debt Ratio
+            if (formData.DebtRatio > 0.4) {
+                newSuggestions.push({
+                    label: "Reduce Debt Ratio",
+                    action: "Pay down existing debts to lower ratio below 40%",
+                    original: formData.DebtRatio,
+                    target: 0.35,
+                    field: "DebtRatio"
+                });
+                modifiedFormData.DebtRatio = 0.35;
+            }
 
-        // Check Debt Ratio
-        if (formData.DebtRatio > 0.4) {
-            newSuggestions.push({
-                label: "Reduce Debt Ratio",
-                action: "Pay down existing debts to lower ratio below 40%",
-                original: formData.DebtRatio,
-                target: 0.35,
-                field: "DebtRatio"
-            });
-            modifiedFormData.DebtRatio = 0.35;
+            // Check Late Payments
+            if (formData.NumberOfTimes90DaysLate > 0) {
+                newSuggestions.push({
+                    label: "Avoid Late Payments",
+                    action: "Ensure no new late payments for 6 months",
+                    original: formData.NumberOfTimes90DaysLate,
+                    target: 0,
+                    field: "NumberOfTimes90DaysLate"
+                });
+                modifiedFormData.NumberOfTimes90DaysLate = 0;
+            }
+
+            if (formData.NumberOfTime3059DaysPastDueNotWorse > 0) {
+                newSuggestions.push({
+                    label: "Improve Payment History",
+                    action: "Clear recent 30-day delinquencies",
+                    original: formData.NumberOfTime3059DaysPastDueNotWorse,
+                    target: 0,
+                    field: "NumberOfTime3059DaysPastDueNotWorse"
+                });
+                modifiedFormData.NumberOfTime3059DaysPastDueNotWorse = 0;
+            }
+
+            // Check Utilization
+            if (formData.RevolvingUtilizationOfUnsecuredLines > 0.3) {
+                newSuggestions.push({
+                    label: "Lower Credit Utilization",
+                    action: "Pay down credit cards below 30% limit",
+                    original: formData.RevolvingUtilizationOfUnsecuredLines,
+                    target: 0.25,
+                    field: "RevolvingUtilizationOfUnsecuredLines"
+                });
+                modifiedFormData.RevolvingUtilizationOfUnsecuredLines = 0.25;
+            }
+
+            setSuggestions(newSuggestions);
+            if (newSuggestions.length > 0) {
+                simulateImprovement(modifiedFormData);
+            }
+        };
+
+        if (result && result.decision === 'Reject') {
+            generateSuggestions();
         }
-
-        // Check Late Payments
-        if (formData.NumberOfTimes90DaysLate > 0) {
-            newSuggestions.push({
-                label: "Avoid Late Payments",
-                action: "Ensure no new late payments for 6 months",
-                original: formData.NumberOfTimes90DaysLate,
-                target: 0,
-                field: "NumberOfTimes90DaysLate"
-            });
-            modifiedFormData.NumberOfTimes90DaysLate = 0;
-        }
-
-        if (formData.NumberOfTime3059DaysPastDueNotWorse > 0) {
-            newSuggestions.push({
-                label: "Improve Payment History",
-                action: "Clear recent 30-day delinquencies",
-                original: formData.NumberOfTime3059DaysPastDueNotWorse,
-                target: 0,
-                field: "NumberOfTime3059DaysPastDueNotWorse"
-            });
-            modifiedFormData.NumberOfTime3059DaysPastDueNotWorse = 0;
-        }
-
-        // Check Utilization
-        if (formData.RevolvingUtilizationOfUnsecuredLines > 0.3) {
-            newSuggestions.push({
-                label: "Lower Credit Utilization",
-                action: "Pay down credit cards below 30% limit",
-                original: formData.RevolvingUtilizationOfUnsecuredLines,
-                target: 0.25,
-                field: "RevolvingUtilizationOfUnsecuredLines"
-            });
-            modifiedFormData.RevolvingUtilizationOfUnsecuredLines = 0.25;
-        }
-
-        setSuggestions(newSuggestions);
-        if (newSuggestions.length > 0) {
-            simulateImprovement(modifiedFormData);
-        }
-    };
+    }, [result, formData]);
 
     const simulateImprovement = async (modifiedData) => {
         setLoading(true);
