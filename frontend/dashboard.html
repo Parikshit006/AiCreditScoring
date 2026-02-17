@@ -624,7 +624,7 @@
     // Load metrics from backend
     async function loadMetrics() {
       try {
-        const response = await fetch("http://localhost:8000/api/v1/model-metrics");
+        const response = await fetch("https://barclays-ai-api.onrender.com/api/v1/model-metrics");
         const data = await response.json();
 
         document.getElementById("auc").innerText = Number(data.auc).toFixed(3);
