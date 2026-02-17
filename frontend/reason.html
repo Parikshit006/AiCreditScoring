@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explainability & Simulator | Barclays AI</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #0a0f1e;
+      --bg-card: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #cbd5e1;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a0f1e 0%, #1a1f35 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Nav */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Outfit';
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo i {
+      color: var(--accent);
+      font-size: 1.8rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 760px;
+      margin: 100px auto 40px;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(255, 255, 255, 0.1) inset;
+    }
+
+    .card h2 {
+      font-family: 'Outfit';
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* SHAP Waterfall Chart */
+    .shap-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .shap-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .shap-label {
+      width: 160px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .shap-bar-container {
+      flex: 1;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shap-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .shap-positive {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.3), var(--success));
+    }
+
+    .shap-negative {
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.3), var(--danger));
+    }
+
+    /* What-If Simulator */
+    .sim-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sim-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .sim-label {
+      width: 180px;
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .sim-slider {
+      flex: 1;
+    }
+
+    .sim-slider input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .sim-slider input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .sim-value {
+      width: 50px;
+      text-align: right;
+      font-weight: 700;
+      font-family: 'Outfit';
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    /* Live Result Panel */
+    .live-result {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .live-score {
+      font-family: 'Outfit';
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      transition: color 0.3s;
+    }
+
+    .live-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .live-decision {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: 'Outfit';
+      transition: all 0.3s;
+    }
+
+    .live-change {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Outfit';
+      transition: all 0.2s;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent), #0ea5e9);
+      color: #0a0f1e;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-accent:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-glass {
+      background: rgba(51, 65, 85, 0.4);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-glass:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Footer */
+    .footer {
+      background: rgba(30, 41, 59, 0.4);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 2rem;
+      margin-top: 4rem;
+      text-align: center;
+    }
+
+    .footer p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Nav -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <i class="fa-solid fa-layer-group"></i> Barclays AI
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="apply.html">Apply</a>
+        <a href="dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- SHAP Waterfall Chart -->
+    <div class="card">
+      <h2>
+        <i class="fa-solid fa-chart-bar" style="color: var(--accent);"></i>
+        Factor Impact Analysis
+      </h2>
+      <div class="card-subtitle">SHAP-based explainability — showing each factor's contribution to the credit decision
+      </div>
+      <div class="shap-chart" id="shapChart"></div>
+    </div>
+
+    <!-- What-If Simulator -->
+    <div class="card">
+      <h2>
+        <i class="fa-solid fa-sliders" style="color: var(--warning);"></i>
+        What-If Simulator
+      </h2>
+      <div class="card-subtitle">Adjust factors below to see how your credit score would change in real-time</div>
+
+      <div id="simulatorSliders"></div>
+
+      <!-- Live Result -->
+      <div class="live-result" id="liveResult">
+        <div class="live-score" id="liveScore">750</div>
+        <div class="live-label">Simulated Credit Score</div>
+        <div class="live-decision" id="liveDecision"></div>
+        <div class="live-change" id="liveChange"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-glass" onclick="resetSimulator()">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+        <button class="btn btn-accent" onclick="window.location.href='apply.html'">
+          <i class="fa-solid fa-paper-plane"></i> Apply with New Values
+        </button>
+      </div>
+    </div>
+
+    <!-- Back Buttons -->
+    <div class="btn-row">
+      <a href="result.html" class="btn btn-glass">
+        <i class="fa-solid fa-arrow-left"></i> Back to Result
+      </a>
+      <a href="apply.html" class="btn btn-accent">
+        <i class="fa-solid fa-plus"></i> New Application
+      </a>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 Barclays AI Credit. <a href="index.html">Home</a> | <a href="#">Privacy</a> | <a href="#">Terms</a>
+    </p>
+  </footer>
+
+  <script>
+    const result = JSON.parse(localStorage.getItem("creditResult"));
+
+    // SHAP factor definitions with weights (simulated SHAP values)
+    const factors = [
+      { key: 'transaction_score', label: 'Transaction Behaviour', weight: 0.25 },
+      { key: 'utility_payment_score', label: 'Utility Payments', weight: 0.20 },
+      { key: 'rent_payment_score', label: 'Rent Payment History', weight: 0.20 },
+      { key: 'business_activity_score', label: 'Business Activity', weight: 0.15 },
+      { key: 'savings_balance', label: 'Savings Balance', weight: 0.10, isAmount: true },
+      { key: 'monthly_income', label: 'Monthly Income', weight: 0.10, isAmount: true },
+    ];
+
+    // Get stored application data
+    const appData = JSON.parse(localStorage.getItem("creditResult")) || {};
+    const storedPayload = (() => {
+      // Extract original values from result or use defaults
+      return {
+        transaction_score: 50,
+        utility_payment_score: 50,
+        rent_payment_score: 50,
+        business_activity_score: 50,
+        savings_balance: 10000,
+        monthly_income: 20000,
+      };
+    })();
+
+    // Try to get original input values
+    if (result) {
+      // Use the values that were submitted
+      storedPayload.transaction_score = result.input_data?.transaction_score || 50;
+      storedPayload.utility_payment_score = result.input_data?.utility_payment_score || 50;
+      storedPayload.rent_payment_score = result.input_data?.rent_payment_score || 50;
+      storedPayload.business_activity_score = result.input_data?.business_activity_score || 50;
+      storedPayload.savings_balance = result.input_data?.savings_balance || 10000;
+      storedPayload.monthly_income = result.input_data?.monthly_income || 20000;
+    }
+
+    // Calculate credit score from factors
+    function calculateScore(values) {
+      let score = 0;
+      factors.forEach(f => {
+        let v = values[f.key] || 0;
+        if (f.isAmount) v = Math.min(v / 1000, 100); // Normalize amounts
+        score += (v / 100) * f.weight * 900;
+      });
+      return Math.round(score + 100); // 100-1000 range
+    }
+
+    const originalScore = result
+      ? Math.round((1 - (Number(result.risk_probability) || 0)) * 900 + 100)
+      : calculateScore(storedPayload);
+
+    // ==================== SHAP CHART ====================
+    function renderShapChart() {
+      const chart = document.getElementById('shapChart');
+      chart.innerHTML = '';
+
+      const shapValues = factors.map(f => {
+        let val = storedPayload[f.key] || 0;
+        if (f.isAmount) val = Math.min(val / 1000, 100);
+        // SHAP value = how much this factor contributes (positive or negative)
+        const impact = ((val - 50) / 50) * f.weight * 100;
+        return { ...f, value: val, impact };
+      });
+
+      // Sort by absolute impact
+      shapValues.sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
+
+      shapValues.forEach((item, i) => {
+        const bar = document.createElement('div');
+        bar.className = 'shap-bar';
+        bar.style.animationDelay = `${i * 0.1}s`;
+
+        const absImpact = Math.abs(item.impact);
+        const maxWidth = Math.min(absImpact * 4, 100);
+        const isPositive = item.impact >= 0;
+
+        bar.innerHTML = `
+          <div class="shap-label">${item.label}</div>
+          <div class="shap-bar-container">
+            <div class="shap-bar-fill ${isPositive ? 'shap-positive' : 'shap-negative'}"
+                 style="width: 0%">
+              ${item.impact >= 0 ? '+' : ''}${item.impact.toFixed(1)}
+            </div>
+          </div>
+        `;
+
+        chart.appendChild(bar);
+
+        // Animate bar width
+        setTimeout(() => {
+          bar.querySelector('.shap-bar-fill').style.width = maxWidth + '%';
+        }, 100 + i * 100);
+      });
+    }
+
+    renderShapChart();
+
+    // ==================== WHAT-IF SIMULATOR ====================
+    const simValues = { ...storedPayload };
+
+    function renderSimulator() {
+      const container = document.getElementById('simulatorSliders');
+      container.innerHTML = '';
+
+      factors.forEach(f => {
+        const max = f.isAmount ? 100000 : 100;
+        const step = f.isAmount ? 1000 : 1;
+        const val = simValues[f.key] || 0;
+
+        const row = document.createElement('div');
+        row.className = 'sim-row';
+        row.innerHTML = `
+          <div class="sim-label">${f.label}</div>
+          <div class="sim-slider">
+            <input type="range" min="0" max="${max}" step="${step}" value="${val}"
+              id="sim_${f.key}" oninput="updateSim('${f.key}', this.value)">
+          </div>
+          <div class="sim-value" id="simVal_${f.key}">
+            ${f.isAmount ? '₹' + val.toLocaleString() : val}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      updateLiveResult();
+    }
+
+    function updateSim(key, value) {
+      simValues[key] = Number(value);
+      const f = factors.find(x => x.key === key);
+      const display = f.isAmount ? '₹' + Number(value).toLocaleString() : value;
+      document.getElementById(`simVal_${key}`).textContent = display;
+      updateLiveResult();
+    }
+
+    function updateLiveResult() {
+      const newScore = calculateScore(simValues);
+      const diff = newScore - originalScore;
+
+      // Animate score
+      const scoreEl = document.getElementById('liveScore');
+      scoreEl.textContent = newScore;
+
+      // Color based on score
+      let color, decision, decClass;
+      if (newScore >= 600) {
+        color = 'var(--success)'; decision = 'APPROVED'; decClass = 'approved';
+      } else if (newScore >= 400) {
+        color = 'var(--warning)'; decision = 'MANUAL REVIEW'; decClass = 'manual';
+      } else {
+        color = 'var(--danger)'; decision = 'REJECTED'; decClass = 'rejected';
+      }
+
+      scoreEl.style.color = color;
+
+      const decEl = document.getElementById('liveDecision');
+      const bgMap = {
+        approved: 'rgba(16,185,129,0.15)',
+        manual: 'rgba(245,158,11,0.15)',
+        rejected: 'rgba(239,68,68,0.15)'
+      };
+      decEl.style.background = bgMap[decClass];
+      decEl.style.color = color;
+      decEl.style.border = `1px solid ${color}`;
+      decEl.innerHTML = `<i class="fa-solid fa-${decClass === 'approved' ? 'check-circle' : decClass === 'rejected' ? 'circle-xmark' : 'clock'}"></i> ${decision}`;
+
+      // Show change
+      const changeEl = document.getElementById('liveChange');
+      if (diff > 0) {
+        changeEl.innerHTML = `<i class="fa-solid fa-arrow-up" style="color: var(--success);"></i> <span style="color: var(--success);">+${diff} points from original</span>`;
+      } else if (diff < 0) {
+        changeEl.innerHTML = `<i class="fa-solid fa-arrow-down" style="color: var(--danger);"></i> <span style="color: var(--danger);">${diff} points from original</span>`;
+      } else {
+        changeEl.innerHTML = `<span style="color: var(--text-muted);">No change from original score</span>`;
+      }
+
+      // Update live result border
+      const panel = document.getElementById('liveResult');
+      panel.style.borderColor = color;
+      panel.style.background = bgMap[decClass]?.replace('0.15', '0.05');
+    }
+
+    function resetSimulator() {
+      Object.assign(simValues, storedPayload);
+      renderSimulator();
+    }
+
+    renderSimulator();
+  </script>
+
+</body>
+
+</html>

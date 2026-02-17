@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barclays AI | Audit Logs</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #0a0f1e;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0f1e 0%, #1a1f35 100%);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .logo {
+            font-family: 'Outfit';
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .logo i {
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), transparent);
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Main */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-family: 'Outfit';
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card-value {
+            font-family: 'Outfit';
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-card-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Table Card */
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .card h2 {
+            font-family: 'Outfit';
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        tbody td {
+            padding: 14px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .badge-sm {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-approved {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge-rejected {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .badge-review {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .score-bar {
+            display: inline-block;
+            width: 60px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(51, 65, 85, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter';
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="logo"><i class="fa-solid fa-layer-group"></i> Barclays AI</div>
+        <nav>
+            <a href="index.html" class="nav-item"><i class="fa-solid fa-home"></i> Home</a>
+            <a href="apply.html" class="nav-item"><i class="fa-solid fa-plus"></i> New Application</a>
+            <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Model Performance</a>
+            <a href="fairness.html" class="nav-item"><i class="fa-solid fa-users"></i> Bias & Fairness</a>
+            <a href="audit.html" class="nav-item active"><i class="fa-solid fa-history"></i> Audit Logs</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="header">
+            <div>
+                <h1>Audit Trail</h1>
+                <div class="header-sub">Complete history of all credit decisions with full traceability</div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-card-value" style="color: var(--accent);">--</div>
+                <div class="stat-card-label">Total Decisions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-value" style="color: var(--success);">--</div>
+                <div class="stat-card-label">Approved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-value" style="color: var(--danger);">--</div>
+                <div class="stat-card-label">Rejected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-value" style="color: var(--warning);">--</div>
+                <div class="stat-card-label">Manual Review</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+            <h2>
+                <i class="fa-solid fa-list-check" style="color: var(--accent);"></i>
+                Decision Log
+            </h2>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterLogs('all', this)">All</button>
+                <button class="filter-btn" onclick="filterLogs('APPROVED', this)">Approved</button>
+                <button class="filter-btn" onclick="filterLogs('REJECTED', this)">Rejected</button>
+                <button class="filter-btn" onclick="filterLogs('MANUAL_REVIEW', this)">Manual Review</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Application ID</th>
+                        <th>Timestamp</th>
+                        <th>Decision</th>
+                        <th>Risk Score</th>
+                        <th>Model</th>
+                        <th>Reviewer</th>
+                    </tr>
+                </thead>
+                <tbody id="logTable"></tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <script>
+        // Load from localStorage
+        const logs = JSON.parse(localStorage.getItem("creditAuditLog") || "[]");
+
+        // Update stats cards
+        const total = logs.length;
+        const approved = logs.filter(l => l.decision === 'APPROVED').length;
+        const rejected = logs.filter(l => l.decision === 'REJECTED').length;
+        const review = logs.filter(l => l.decision === 'MANUAL_REVIEW').length;
+
+        const statCards = document.querySelectorAll('.stat-card-value');
+        statCards[0].textContent = total || '--';
+        statCards[1].textContent = approved || '--';
+        statCards[2].textContent = rejected || '--';
+        statCards[3].textContent = review || '--';
+
+        function renderLogs(filter) {
+            const table = document.getElementById('logTable');
+            table.innerHTML = '';
+            const filtered = filter === 'all' ? logs : logs.filter(l => l.decision === filter);
+
+            if (filtered.length === 0) {
+                table.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-muted);">No applications submitted yet. <a href="apply.html" style="color:var(--accent);">Submit one now →</a></td></tr>';
+                return;
+            }
+
+            filtered.forEach((log, i) => {
+                const badgeClass = log.decision === 'APPROVED' ? 'badge-approved'
+                    : log.decision === 'REJECTED' ? 'badge-rejected' : 'badge-review';
+                const label = log.decision.replace('_', ' ');
+                const riskPct = Math.round(log.risk * 100);
+                const barColor = log.risk < 0.3 ? 'var(--success)' : log.risk < 0.6 ? 'var(--warning)' : 'var(--danger)';
+
+                const tr = document.createElement('tr');
+                tr.style.animation = `fadeIn 0.3s ${i * 0.05}s both`;
+                tr.innerHTML = `
+          <td style="font-weight: 600; color: var(--text-main);">${log.id}</td>
+          <td>${log.time}</td>
+          <td><span class="badge-sm ${badgeClass}">${label}</span></td>
+          <td>
+            <span class="score-bar"><span class="score-bar-fill" style="width: ${riskPct}%; background: ${barColor};"></span></span>
+            ${riskPct}%
+          </td>
+          <td>${log.model}</td>
+          <td>${log.reviewer}</td>
+        `;
+                table.appendChild(tr);
+            });
+        }
+
+        function filterLogs(filter, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderLogs(filter);
+        }
+
+        renderLogs('all');
+    </script>
+
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
+</body>
+
+</html>

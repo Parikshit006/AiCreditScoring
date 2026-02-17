@@ -1,54 +1,66 @@
-import urllib.request
+import requests
 import json
-import sys
+import time
 
-# Define the API Endpoint
-URL = "http://localhost:8000/api/v1/predict"
+URL = "http://localhost:8000/api/v1/apply"
 
-# Sample Applicant Data (Low Risk Profile)
-payload = {
-  "RevolvingUtilizationOfUnsecuredLines": 0.05,
-  "age": 35,
-  "NumberOfTime3059DaysPastDueNotWorse": 0,
-  "DebtRatio": 0.2,
-  "MonthlyIncome": 5000,
-  "NumberOfOpenCreditLinesAndLoans": 5,
-  "NumberOfTimes90DaysLate": 0,
-  "NumberRealEstateLoansOrLines": 1,
-  "NumberOfTime6089DaysPastDueNotWorse": 0,
-  "NumberOfDependents": 1
-}
+def test_alternative_apply():
+    print(f"Testing {URL}...")
+    
+    # Test Case 1: High potential (should be APPROVED)
+    payload_good = {
+      "application_id": f"test_{int(time.time()*1000)}",
+      "applicant_type": "individual",
+      "monthly_income": 8000,
+      "transaction_score": 85,
+      "utility_payment_score": 90,
+      "business_activity_score": 80
+    }
+    
+    try:
+        print("\n--- Test Case 1: Good Applicant ---")
+        response = requests.post(URL, json=payload_good)
+        if response.status_code == 200:
+            result = response.json()
+            print("Success!")
+            print(json.dumps(result, indent=2))
+            
+            assert result['decision'] == 'APPROVED'
+            assert result['risk_level'] == 'LOW'
+            print("ASSERTION PASSED: Correctly APPROVED")
+        else:
+            print(f"FAILED: {response.status_code}")
+            print(response.text)
 
-print(f"Testing Integration with Backend at: {URL}")
-print("-" * 50)
+    except Exception as e:
+        print(f"Error: {e}")
 
-try:
-    # Prepare the request
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(URL, data=data, headers={'Content-Type': 'application/json'})
+    # Test Case 2: Low potential (should be REJECTED or MANUAL_REVIEW)
+    payload_bad = {
+      "application_id": f"test_{int(time.time()*1000)}_bad",
+      "applicant_type": "individual",
+      "monthly_income": 1500,
+      "transaction_score": 30,
+      "utility_payment_score": 20,
+      "business_activity_score": 10
+    }
 
-    # Send request
-    with urllib.request.urlopen(req) as response:
-        status = response.status
-        body = response.read().decode('utf-8')
-        result = json.loads(body)
+    try:
+        print("\n--- Test Case 2: Risky Applicant ---")
+        response = requests.post(URL, json=payload_bad)
+        if response.status_code == 200:
+            result = response.json()
+            print("Success!")
+            print(json.dumps(result, indent=2))
+            
+            assert result['decision'] in ['REJECTED', 'MANUAL_REVIEW']
+            print("ASSERTION PASSED: Correctly identified as Risk")
+        else:
+            print(f"FAILED: {response.status_code}")
+            print(response.text)
 
-    if status == 200:
-        print("✅ SUCCESS: Backend is reachable.")
-        print("✅ SUCCESS: Model returned a prediction.")
-        print("-" * 50)
-        print("Model Output:")
-        print(f"  Decision: {result['decision']}")
-        print(f"  Probability: {result['default_probability']:.2%}")
-        print(f"  Risk Category: {result['risk_category']}")
-        print(f"  Explanation: {result['explanation_text']}")
-        print("-" * 50)
-        print("The AI Model and Backend are working correctly!")
-    else:
-        print(f"❌ FAIL: HTTP Status {status}")
-        print(body)
+    except Exception as e:
+        print(f"Error: {e}")
 
-except Exception as e:
-    print(f"❌ CONNECTION ERROR: Could not connect to backend.")
-    print(f"Details: {e}")
-    print("\nPlease make sure the backend is running in Terminal 1 with: 'uvicorn app.main:app --reload --port 8000'")
+if __name__ == "__main__":
+    test_alternative_apply()

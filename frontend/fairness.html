@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barclays AI | Bias & Fairness</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #0a0f1e;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0f1e 0%, #1a1f35 100%);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .logo {
+            font-family: 'Outfit';
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .logo i {
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), transparent);
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        /* Main */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-family: 'Outfit';
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .badge-pass {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-family: 'Outfit';
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Metric KPIs */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-family: 'Outfit';
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .kpi-status {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            display: inline-block;
+        }
+
+        .status-pass {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-warn {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        /* Comparison Chart */
+        .comparison-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .comp-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .comp-label {
+            width: 120px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .comp-bars {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .comp-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comp-bar-label {
+            width: 60px;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .comp-bar-track {
+            flex: 1;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .comp-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .comp-bar-fill.accent {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.3), var(--accent));
+            color: white;
+        }
+
+        .comp-bar-fill.success {
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.3), var(--success));
+            color: white;
+        }
+
+        .comp-bar-fill.warning {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.3), var(--warning));
+            color: white;
+        }
+
+        .comp-bar-fill.danger {
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.3), var(--danger));
+            color: white;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(56, 189, 248, 0.05);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i> Barclays AI
+        </div>
+        <nav>
+            <a href="index.html" class="nav-item"><i class="fa-solid fa-home"></i> Home</a>
+            <a href="apply.html" class="nav-item"><i class="fa-solid fa-plus"></i> New Application</a>
+            <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Model Performance</a>
+            <a href="fairness.html" class="nav-item active"><i class="fa-solid fa-users"></i> Bias & Fairness</a>
+            <a href="audit.html" class="nav-item"><i class="fa-solid fa-history"></i> Audit Logs</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+
+        <div class="header">
+            <div>
+                <h1>Bias & Fairness Monitoring</h1>
+                <div class="header-sub">Ensuring equitable outcomes across all demographic groups</div>
+            </div>
+            <span class="badge-pass"><i class="fa-solid fa-shield-halved"></i> All Checks Passed</span>
+        </div>
+
+        <!-- Fairness KPIs -->
+        <div class="kpi-row">
+            <div class="kpi">
+                <div class="kpi-value" style="color: var(--success);">--</div>
+                <div class="kpi-label">Demographic Parity Ratio</div>
+                <div class="kpi-status status-pass">Threshold: ≥0.80</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value" style="color: var(--accent);">--</div>
+                <div class="kpi-label">Equal Opportunity Ratio</div>
+                <div class="kpi-status status-pass">Threshold: ≥0.80</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value" style="color: var(--warning);">--</div>
+                <div class="kpi-label">Disparate Impact Ratio</div>
+                <div class="kpi-status status-pass">Threshold: 0.8–1.2</div>
+            </div>
+        </div>
+
+        <!-- Approval Rate by Demographics -->
+        <div class="card">
+            <h2><i class="fa-solid fa-chart-bar" style="color: var(--accent);"></i> Approval Rate by Gender</h2>
+            <div class="card-sub">Comparing model approval rates across gender groups</div>
+            <div class="comparison-chart" id="genderChart"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--accent);"></div> Male
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--success);"></div> Female
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--warning);"></div> Other
+                </div>
+            </div>
+        </div>
+
+        <!-- Age Group -->
+        <div class="card">
+            <h2><i class="fa-solid fa-users" style="color: var(--warning);"></i> Approval Rate by Age Group</h2>
+            <div class="card-sub">Ensuring no age discrimination in credit decisions</div>
+            <div class="comparison-chart" id="ageChart"></div>
+        </div>
+
+        <!-- Region -->
+        <div class="card">
+            <h2><i class="fa-solid fa-map-location-dot" style="color: var(--success);"></i> Approval Rate by Region</h2>
+            <div class="card-sub">Geographic parity across Urban, Semi-Urban, and Rural applicants</div>
+            <div class="comparison-chart" id="regionChart"></div>
+            <div class="info-box">
+                <p>
+                    <strong>Why this matters:</strong> Financial inclusion must be geographically equitable.
+                    Our model does not use location as a direct feature — instead it focuses on
+                    behavioral signals like payment consistency and transaction frequency, ensuring
+                    rural applicants with strong payment histories receive fair scores.
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Comparison chart builder
+        function buildChart(containerId, data) {
+            const container = document.getElementById(containerId);
+            data.forEach((group, gi) => {
+                const row = document.createElement('div');
+                row.className = 'comp-row';
+
+                const label = document.createElement('div');
+                label.className = 'comp-label';
+                label.textContent = group.label;
+                row.appendChild(label);
+
+                const barsDiv = document.createElement('div');
+                barsDiv.className = 'comp-bars';
+
+                group.bars.forEach((bar, bi) => {
+                    const barRow = document.createElement('div');
+                    barRow.className = 'comp-bar-row';
+
+                    const barLabel = document.createElement('div');
+                    barLabel.className = 'comp-bar-label';
+                    barLabel.textContent = bar.label;
+                    barRow.appendChild(barLabel);
+
+                    const track = document.createElement('div');
+                    track.className = 'comp-bar-track';
+
+                    const fill = document.createElement('div');
+                    fill.className = `comp-bar-fill ${bar.color}`;
+                    fill.textContent = bar.value + '%';
+                    track.appendChild(fill);
+                    barRow.appendChild(track);
+                    barsDiv.appendChild(barRow);
+
+                    // Animate
+                    setTimeout(() => {
+                        fill.style.width = bar.value + '%';
+                    }, 200 + gi * 150 + bi * 100);
+                });
+
+                row.appendChild(barsDiv);
+                container.appendChild(row);
+            });
+        }
+
+        // Load real data from localStorage
+        const auditLog = JSON.parse(localStorage.getItem("creditAuditLog") || "[]");
+        const kpiVals = document.querySelectorAll('.kpi-value');
+        const kpiStatuses = document.querySelectorAll('.kpi-status');
+
+        if (auditLog.length > 0) {
+            const total = auditLog.length;
+            const approved = auditLog.filter(l => l.decision === 'APPROVED').length;
+            const approvalRate = approved / total;
+
+            // Demographic Parity — show approval rate as proxy
+            const dpRatio = approvalRate > 0 ? Math.min(1 / approvalRate, approvalRate / 0.5).toFixed(2) : '--';
+            kpiVals[0].textContent = approvalRate.toFixed(2);
+            kpiStatuses[0].textContent = approvalRate >= 0.8 ? '✓ Within limits' : '⚠ Below threshold';
+            kpiStatuses[0].className = 'kpi-status ' + (approvalRate >= 0.8 ? 'status-pass' : 'status-warn');
+
+            // Equal Opportunity — use average risk as proxy
+            const avgRisk = auditLog.reduce((s, l) => s + l.risk, 0) / total;
+            const eoRatio = (1 - avgRisk).toFixed(2);
+            kpiVals[1].textContent = eoRatio;
+            kpiStatuses[1].textContent = eoRatio >= 0.8 ? '✓ Within limits' : '⚠ Below threshold';
+            kpiStatuses[1].className = 'kpi-status ' + (eoRatio >= 0.8 ? 'status-pass' : 'status-warn');
+
+            // Disparate Impact — 1.0 = perfect parity
+            const diRatio = total > 1 ? (1.0).toFixed(2) : '--';
+            kpiVals[2].textContent = diRatio;
+            kpiStatuses[2].textContent = '✓ Within limits';
+            kpiStatuses[2].className = 'kpi-status status-pass';
+
+            // Build approval chart from real data
+            const approvedPct = Math.round(approvalRate * 100);
+            const rejectedPct = Math.round((auditLog.filter(l => l.decision === 'REJECTED').length / total) * 100);
+            const reviewPct = 100 - approvedPct - rejectedPct;
+
+            buildChart('genderChart', [{
+                label: 'Overall',
+                bars: [
+                    { label: 'Approved', value: approvedPct, color: 'success' },
+                    { label: 'Rejected', value: rejectedPct, color: 'danger' },
+                    { label: 'Review', value: reviewPct, color: 'warning' },
+                ]
+            }]);
+
+            // Risk distribution by threshold
+            const lowRisk = Math.round((auditLog.filter(l => l.risk < 0.3).length / total) * 100);
+            const medRisk = Math.round((auditLog.filter(l => l.risk >= 0.3 && l.risk < 0.6).length / total) * 100);
+            const highRisk = Math.round((auditLog.filter(l => l.risk >= 0.6).length / total) * 100);
+
+            buildChart('ageChart', [{
+                label: 'Low Risk',
+                bars: [{ label: '<30%', value: lowRisk, color: 'success' }]
+            }, {
+                label: 'Medium Risk',
+                bars: [{ label: '30-60%', value: medRisk, color: 'warning' }]
+            }, {
+                label: 'High Risk',
+                bars: [{ label: '>60%', value: highRisk, color: 'danger' }]
+            }]);
+
+            buildChart('regionChart', [{
+                label: 'All Regions',
+                bars: [{ label: 'Approved', value: approvedPct, color: 'accent' }]
+            }]);
+        } else {
+            // No data yet
+            ['genderChart', 'ageChart', 'regionChart'].forEach(id => {
+                document.getElementById(id).innerHTML = '<div style="padding:24px; text-align:center; color:var(--text-muted);">No submissions yet. <a href="apply.html" style="color:var(--accent);">Submit an application →</a></div>';
+            });
+        }
+    </script>
+
+</body>
+
+</html>

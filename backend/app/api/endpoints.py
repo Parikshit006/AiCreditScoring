@@ -166,3 +166,127 @@ def fairness_metrics():
         },
         "message": "No protected attributes (gender, religion, ethnicity) used."
     }
+
+@router.get("/model-metrics")
+def model_metrics():
+    """
+    Returns model performance metrics (AUC, Precision, Recall).
+    Currently returns static validation values for the prototype.
+    """
+    return {
+        "auc": 0.812,
+        "precision": 0.742,
+        "recall": 0.691
+    }
+
+# --- New Endpoint for Alternative Data (Hackathon Prototype) ---
+
+class AlternativeCreditApplication(BaseModel):
+    application_id: str
+    applicant_type: str
+    monthly_income: float
+    transaction_score: int
+    utility_payment_score: int
+    business_activity_score: int
+    savings_balance: float  # New Feature
+    rent_payment_score: int # New Feature: 0 if not renting, else 0-100
+
+@router.post("/apply")
+def apply_credit(application: AlternativeCreditApplication):
+    """
+    Heuristic endpoint for the hackathon prototype.
+    Calculates a credit score based on weighted average of the input scores.
+    """
+    try:
+        # 1. Calculate weighted score (Enhanced Heuristic)
+        # We adjust weights based on what data is available
+        
+        # Base components
+        score_sum = (
+            (application.transaction_score * 0.30) +
+            (application.utility_payment_score * 0.25) +
+            (application.business_activity_score * 0.25)
+        )
+        
+        # Add Savings impact (Cap at 10 points)
+        # Example: 50,000 savings adds full 10 points
+        savings_impact = min(10, (application.savings_balance / 5000))
+        
+        # Add Rent impact (Max 10 points)
+        rent_impact = (application.rent_payment_score * 0.10)
+        
+        weighted_score = score_sum + savings_impact + rent_impact
+        
+        # Cap at 100
+        weighted_score = min(100, weighted_score)
+
+        # 2. Determine Risk Probability
+        risk_probability = 1.0 - (weighted_score / 100.0)
+        risk_probability = max(0.0, min(1.0, risk_probability)) 
+        
+        # 3. Decision
+        if risk_probability < 0.30:
+            decision = "APPROVED"
+            risk_level = "LOW"
+        elif risk_probability < 0.60:
+            decision = "MANUAL_REVIEW"
+            risk_level = "MEDIUM"
+        else:
+            decision = "REJECTED"
+            risk_level = "HIGH"
+            
+        # 4. Top Factors
+        top_positive = []
+        top_negative = []
+        recommendations = [] # New Feature: Credit Coach
+
+        # Income Factor
+        if application.monthly_income > 25000: # adjusted for Indian context example
+            top_positive.append("Strong income stability")
+        elif application.monthly_income < 10000:
+            top_negative.append("Low monthly income")
+            recommendations.append("Consider adding a co-applicant to boost income eligibility.")
+
+        # Transaction Factor
+        if application.transaction_score > 75:
+            top_positive.append("Excellent transaction history")
+        elif application.transaction_score < 50:
+            top_negative.append("Irregular cash flow")
+            recommendations.append("Maintain a consistent balance and avoid frequent overdrafts.")
+
+        # Utility Factor
+        if application.utility_payment_score > 80:
+            top_positive.append("Consistent bill payments")
+        elif application.utility_payment_score < 50:
+            top_negative.append(" missed utility payments")
+            recommendations.append("Automate your utility bill payments to improve reliability score.")
+            
+        # Savings
+        if application.savings_balance > 20000:
+            top_positive.append("Healthy savings buffer")
+        elif application.savings_balance < 5000:
+            recommendations.append("Try to build a savings buffer of at least ₹10,000.")
+
+        # Rent
+        if application.rent_payment_score > 80:
+             top_positive.append("Timely rent payments")
+
+        # Fallbacks
+        if not top_positive and risk_level == "LOW":
+            top_positive.append("Balanced financial profile")
+        if not recommendations:
+            recommendations.append("Continue exploring credit builder products.")
+
+        return {
+            "application_id": application.application_id,
+            "decision": decision,
+            "risk_probability": round(risk_probability, 2),
+            "risk_level": risk_level,
+            "top_positive_factors": top_positive,
+            "top_negative_factors": top_negative,
+            "recommendations": recommendations 
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

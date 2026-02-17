@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Credit Decision | Barclays AI</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #0a0f1e;
+      --bg-card: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #cbd5e1;
+      --accent: #38bdf8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a0f1e 0%, #1a1f35 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navigation */
+    .navbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo i {
+      color: var(--accent);
+      font-size: 1.8rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      background: rgba(16, 185, 129, 0.15);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--success);
+      border-radius: 12px;
+      padding: 16px 24px;
+      color: var(--success);
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 9999;
+      transform: translateX(400px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 600px;
+      margin: 100px auto 40px;
+      padding: 0 20px;
+    }
+
+    /* Score Gauge Section */
+    .gauge-section {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(255, 255, 255, 0.1) inset;
+    }
+
+    .gauge-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .gauge-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    /* SVG Gauge */
+    .gauge-wrapper {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 24px;
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 12;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1),
+        stroke 1s ease;
+    }
+
+    .gauge-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .gauge-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .gauge-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Decision Badge */
+    .decision-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 15px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .decision-badge.approved {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .decision-badge.rejected {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .decision-badge.manual {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .kpi-card {
+      background: rgba(51, 65, 85, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Card Sections */
+    .card {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .card li {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card li:last-child {
+      border-bottom: none;
+    }
+
+    .card li::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .positive-list li::before {
+      background: var(--success);
+    }
+
+    .negative-list li::before {
+      background: var(--danger);
+    }
+
+    .rec-list li::before {
+      background: var(--warning);
+    }
+
+    .badge-sm {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.2s;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent), #0ea5e9);
+      color: #0a0f1e;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-accent:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+    }
+
+    .btn-glass {
+      background: rgba(51, 65, 85, 0.4);
+      backdrop-filter: blur(10px);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-glass:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-download {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-download:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+
+    /* Footer */
+    .footer {
+      background: rgba(30, 41, 59, 0.4);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 2rem;
+      margin-top: 4rem;
+      text-align: center;
+    }
+
+    .footer p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMsg">Application processed successfully!</span>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <i class="fa-solid fa-layer-group"></i> Barclays AI
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="apply.html">Apply</a>
+        <a href="dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Score Gauge -->
+    <div class="gauge-section">
+      <h2>Credit Decision</h2>
+      <div class="gauge-subtitle">AI-powered risk assessment using alternative data</div>
+
+      <div class="gauge-wrapper">
+        <svg viewBox="0 0 200 200" width="220" height="220">
+          <circle cx="100" cy="100" r="85" class="gauge-bg" />
+          <circle cx="100" cy="100" r="85" class="gauge-fill" id="gaugeFill" stroke-dasharray="534"
+            stroke-dashoffset="534" transform="rotate(-90, 100, 100)" />
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-value" id="gaugeValue">0</div>
+          <div class="gauge-label">Credit Score</div>
+        </div>
+      </div>
+
+      <div id="decisionBadge" class="decision-badge"></div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Default Risk</div>
+          <div class="kpi-value" id="risk_probability">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Risk Level</div>
+          <div class="kpi-value" id="risk_level">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Positive Factors -->
+    <div class="card">
+      <h3>
+        <i class="fa-solid fa-arrow-trend-up" style="color: var(--success);"></i>
+        Positive Factors
+        <span class="badge-sm badge-green">Lower Risk</span>
+      </h3>
+      <ul class="positive-list" id="positiveList"></ul>
+    </div>
+
+    <!-- Negative Factors -->
+    <div class="card">
+      <h3>
+        <i class="fa-solid fa-arrow-trend-down" style="color: var(--danger);"></i>
+        Risk Factors
+        <span class="badge-sm badge-red">Higher Risk</span>
+      </h3>
+      <ul class="negative-list" id="negativeList"></ul>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card" style="border-left: 3px solid var(--warning);">
+      <h3>
+        <i class="fa-solid fa-lightbulb" style="color: var(--warning);"></i>
+        Credit Coach Recommendations
+      </h3>
+      <ul class="rec-list" id="recList"></ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions">
+      <button class="btn btn-glass" onclick="window.location.href='reason.html'">
+        <i class="fa-solid fa-magnifying-glass"></i> Explain
+      </button>
+      <button class="btn btn-download" onclick="downloadReport()">
+        <i class="fa-solid fa-download"></i> PDF Report
+      </button>
+      <button class="btn btn-accent" onclick="window.location.href='apply.html'">
+        <i class="fa-solid fa-plus"></i> New
+      </button>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 Barclays AI Credit. <a href="index.html">Home</a> | <a href="#">Privacy</a> | <a href="#">Terms</a>
+    </p>
+  </footer>
+
+  <script>
+    const result = JSON.parse(localStorage.getItem("creditResult"));
+
+    if (!result) {
+      alert("No prediction data found. Please submit the application first.");
+      window.location.href = 'apply.html';
+    } else {
+
+      // Show toast notification
+      setTimeout(() => {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent =
+          `Application ${result.application_id || ''} processed successfully!`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4000);
+      }, 300);
+
+      // Calculate credit score (inverse of risk: low risk = high score)
+      const riskProb = Number(result.risk_probability) || 0;
+      const creditScore = Math.round((1 - riskProb) * 900 + 100); // 100-1000 range
+      const scorePercent = (creditScore - 100) / 900;
+
+      // Animate gauge
+      const gaugeFill = document.getElementById('gaugeFill');
+      const gaugeValue = document.getElementById('gaugeValue');
+      const circumference = 534;
+      const targetOffset = circumference * (1 - scorePercent);
+
+      // Set color based on score
+      let gaugeColor;
+      if (scorePercent > 0.66) gaugeColor = '#10b981';
+      else if (scorePercent > 0.33) gaugeColor = '#f59e0b';
+      else gaugeColor = '#ef4444';
+
+      gaugeFill.style.stroke = gaugeColor;
+
+      // Animate after slight delay
+      setTimeout(() => {
+        gaugeFill.style.strokeDashoffset = targetOffset;
+
+        // Count up animation
+        let current = 0;
+        const duration = 2000;
+        const start = performance.now();
+        function animate(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          current = Math.round(eased * creditScore);
+          gaugeValue.textContent = current;
+          gaugeValue.style.color = gaugeColor;
+          if (progress < 1) requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+      }, 500);
+
+      // Risk display
+      const riskProbDisplay = (riskProb * 100).toFixed(1) + "%";
+      document.getElementById("risk_probability").innerText = riskProbDisplay;
+      document.getElementById("risk_level").innerText = result.risk_level || "-";
+
+      // Decision badge
+      const badge = document.getElementById("decisionBadge");
+      const decision = (result.decision || "").toUpperCase();
+      if (decision === "APPROVED") {
+        badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> APPROVED';
+        badge.classList.add("approved");
+      } else if (decision === "REJECTED") {
+        badge.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> REJECTED';
+        badge.classList.add("rejected");
+      } else {
+        badge.innerHTML = '<i class="fa-solid fa-clock"></i> MANUAL REVIEW';
+        badge.classList.add("manual");
+      }
+
+      // Positive factors
+      const positiveList = document.getElementById("positiveList");
+      if (Array.isArray(result.top_positive_factors) && result.top_positive_factors.length > 0) {
+        result.top_positive_factors.forEach(item => {
+          const li = document.createElement("li"); li.textContent = item;
+          positiveList.appendChild(li);
+        });
+      } else {
+        positiveList.innerHTML = "<li>No positive factors returned</li>";
+      }
+
+      // Negative factors
+      const negativeList = document.getElementById("negativeList");
+      if (Array.isArray(result.top_negative_factors) && result.top_negative_factors.length > 0) {
+        result.top_negative_factors.forEach(item => {
+          const li = document.createElement("li"); li.textContent = item;
+          negativeList.appendChild(li);
+        });
+      } else {
+        negativeList.innerHTML = "<li>No negative factors returned</li>";
+      }
+
+      // Recommendations
+      const recList = document.getElementById("recList");
+      if (Array.isArray(result.recommendations) && result.recommendations.length > 0) {
+        result.recommendations.forEach(item => {
+          const li = document.createElement("li"); li.textContent = item;
+          recList.appendChild(li);
+        });
+      } else {
+        recList.innerHTML = "<li>Maintain current financial behavior for best results.</li>";
+      }
+    }
+
+    // PDF Report Download
+    function downloadReport() {
+      if (!result) return;
+      const r = result;
+      const score = Math.round((1 - (Number(r.risk_probability) || 0)) * 900 + 100);
+      const now = new Date().toLocaleString();
+
+      const content = `
+BARCLAYS AI CREDIT - CREDIT ASSESSMENT REPORT
+${'='.repeat(50)}
+
+Generated: ${now}
+Application ID: ${r.application_id || 'N/A'}
+
+CREDIT SCORE: ${score}/1000
+Decision: ${r.decision || 'N/A'}
+Risk Probability: ${((Number(r.risk_probability) || 0) * 100).toFixed(1)}%
+Risk Level: ${r.risk_level || 'N/A'}
+
+${'─'.repeat(50)}
+POSITIVE FACTORS:
+${(r.top_positive_factors || []).map(f => '  ✓ ' + f).join('\n')}
+
+RISK FACTORS:
+${(r.top_negative_factors || []).map(f => '  ✗ ' + f).join('\n')}
+
+RECOMMENDATIONS:
+${(r.recommendations || []).map(f => '  • ' + f).join('\n')}
+
+${'─'.repeat(50)}
+DISCLAIMER: This assessment is generated by an AI model
+using alternative data sources. Final approval is subject
+to manual review by a credit officer.
+
+© 2026 Barclays AI Credit Platform
+      `.trim();
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `credit_report_${r.application_id || 'unknown'}.txt`;
+      link.click();
+    }
+  </script>
+
+</body>
+
+</html>
