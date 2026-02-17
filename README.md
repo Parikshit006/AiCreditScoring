@@ -202,6 +202,35 @@ curl -X POST http://localhost:8000/api/v1/apply \
 
 ---
 
+## 🔒 Security Measures
+
+### Input Validation & Sanitization
+- **Pydantic schema validation** on all API endpoints — rejects malformed or missing fields before processing
+- **Type enforcement** — numeric fields (income, scores) are strictly typed; no string injection possible
+- **Range constraints** — behavioural scores capped at 0–100, risk probabilities clamped between 0.0–1.0
+
+### API Security
+- **CORS middleware** — Cross-Origin Resource Sharing configured to control which domains can access the API
+- **Error handling** — all endpoints wrapped in try/catch blocks; internal errors return sanitized HTTP 500 responses without exposing stack traces or model internals
+- **No raw SQL / No database injection** — the prototype uses in-memory model inference only; no database queries exposed to user input
+
+### Data Privacy
+- **No PII storage on server** — the backend is stateless; it processes requests and returns results without persisting any personal data
+- **Client-side data only** — audit logs stored in browser `localStorage`, giving users full control over their data
+- **No protected attributes collected** — the application form does not ask for gender, religion, caste, or ethnicity
+
+### Model Security
+- **Serialized model** (`model.pkl`) is pre-trained and read-only — cannot be modified via API
+- **SHAP explainer** runs server-side only — model internals (weights, trees) are never exposed to the frontend
+- **Heuristic scoring** uses server-side weighted calculation — scoring logic is not visible to end users
+
+### Frontend Security
+- **No inline user-generated content** rendered without escaping
+- **HTTPS enforced** on deployed endpoints (Render provides automatic SSL/TLS)
+- **No third-party tracking** — only Google Fonts and Font Awesome CDN loaded
+
+---
+
 ## 🧰 Tech Stack
 
 | Layer | Technology |
